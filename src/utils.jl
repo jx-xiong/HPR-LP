@@ -205,6 +205,7 @@ function run_file(FILE_NAME::String, params::HPRLP_parameters)
     println(@sprintf("FORMULATING LP time: %.2f seconds", time() - t_start))
 
     if params.use_gpu
+        CUDA.device!(params.device_number)
         t_start = time()
         println("SCALING LP ...")
         scaling_info = scaling!(standard_lp, params.use_Ruiz_scaling, params.use_Pock_Chambolle_scaling, params.use_bc_scaling)
@@ -301,6 +302,7 @@ function run_Abc(A::SparseMatrixCSC,
     setup_start = time()
     standard_lp = LP_info_cpu(A, transpose(A), b, c, l, u, m1, obj_constant)
     if params.use_gpu
+        CUDA.device!(params.device_number)
         t_start = time()
         println("SCALING LP ...")
         scaling_info = scaling!(standard_lp, params.use_Ruiz_scaling, params.use_Pock_Chambolle_scaling, params.use_bc_scaling)
@@ -351,7 +353,6 @@ end
 
 # the function to test the HPRLP algorithm on a dataset
 function run_dataset(data_path::String, result_path::String, params::HPRLP_parameters)
-    CUDA.device!(params.device_number)
 
     files = readdir(data_path)
 
@@ -481,8 +482,6 @@ end
 
 # the function to test the HPRLP algorithm on a single file
 function run_single(file_name::String, params::HPRLP_parameters)
-
-    CUDA.device!(params.device_number)
 
     println("data path: ", file_name)
 

@@ -23,7 +23,7 @@ $$
 
 ## Numerical Results on an NVIDIA A100-SXM4-80GB GPU
 
-**Numerical performance of HPR-LP.jl and cuPDLP.jl on 49 instances of **[**Mittelmann's LP benchmark set**](https://plato.asu.edu/ftp/lpfeas.html)** with Gurobi's presolve**
+**Numerical performance of HPR-LP.jl and** [**cuPDLP.jl**](https://github.com/jinwen-yang/cuPDLP.jl) **(downloaded on July 24th, 2024) on 49 instances of **[**Mittelmann's LP benchmark set**](https://plato.asu.edu/ftp/lpfeas.html)** with Gurobi's presolve**
 
 <table>
   <thead>

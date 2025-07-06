@@ -453,16 +453,16 @@ function solve(lp::Union{LP_info_gpu,LP_info_cpu},
     scaling_info::Union{Scaling_info_gpu,Scaling_info_cpu},
     params::HPRLP_parameters)
     ### power iteration to estimate lambda_max ###
-    CUDA.synchronize()
     t_start_alg = time()
 
     println("ESTIMATING MAXIMUM EIGENVALUE ...")
     if params.use_gpu
+        CUDA.synchronize()
         lambda_max = power_iteration_gpu(lp.A, lp.AT) * 1.01
+        CUDA.synchronize()
     else
         lambda_max = power_iteration_cpu(lp.A, lp.AT) * 1.01
     end
-    CUDA.synchronize()
     power_time = time() - t_start_alg
     println(@sprintf("ESTIMATING MAXIMUM EIGENVALUE time = %.2f seconds", power_time))
     println(@sprintf("estimated maximum eigenvalue of AAT = %.2e", lambda_max))
