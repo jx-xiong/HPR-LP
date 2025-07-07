@@ -186,7 +186,7 @@ function power_iteration_cpu(A::SparseMatrixCSC, AT::SparseMatrixCSC,
     return lambda_max
 end
 
-# the function to run the HPRLP algorithm on a single file
+# the function to run the HPR-LP algorithm on a single file
 function run_file(FILE_NAME::String, params::HPRLP_parameters)
     t_start = time()
     println("READING FILE ... ", FILE_NAME)
@@ -284,7 +284,7 @@ function run_lp(A::SparseMatrixCSC,
     return results
 end
 
-# the function to run the HPRLP algorithm on a single LP problem with A, b, c, l, u, m1, obj_constant
+# the function to run the HPR-LP algorithm on a single LP problem with A, b, c, l, u, m1, obj_constant
 function run_Abc(A::SparseMatrixCSC,
     b::Vector{Float64},
     c::Vector{Float64},
@@ -351,7 +351,7 @@ function run_Abc(A::SparseMatrixCSC,
     return results
 end
 
-# the function to test the HPRLP algorithm on a dataset
+# the function to test the HPR-LP algorithm on a dataset
 function run_dataset(data_path::String, result_path::String, params::HPRLP_parameters)
 
     files = readdir(data_path)
@@ -480,7 +480,7 @@ function run_dataset(data_path::String, result_path::String, params::HPRLP_param
     close(io)
 end
 
-# the function to test the HPRLP algorithm on a single file
+# the function to test the HPR-LP algorithm on a single file
 function run_single(file_name::String, params::HPRLP_parameters)
 
     println("data path: ", file_name)

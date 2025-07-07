@@ -11,7 +11,7 @@ Data Structures
 
 =#
 
-# the space for the parameters of the HPRLP algorithm
+# the space for the parameters of the HPR-LP algorithm
 mutable struct HPRLP_parameters
     # the stopping tolerance, default is 1e-6
     stoptol::Float64
@@ -108,7 +108,7 @@ mutable struct HPRLP_results
     HPRLP_results() = new()
 end
 
-# Define the workspace for the HPRLP algorithm
+# Define the workspace for the HPR-LP algorithm
 mutable struct HPRLP_workspace_gpu
     # The vector x
     x::CuVector{Float64}
@@ -226,7 +226,7 @@ mutable struct HPRLP_workspace_cpu
     HPRLP_workspace_cpu() = new()
 end
 
-# Define the variables related to the residuals of the HPRLP
+# Define the variables related to the residuals of the HPR-LP
 mutable struct HPRLP_residuals
     # The relative residuals of the primal feasibility evaluated at x_bar
     err_Rp_org_bar::Float64
@@ -253,7 +253,7 @@ mutable struct HPRLP_residuals
     HPRLP_residuals() = new()
 end
 
-# Define the variables related to the restart of the HPRLP
+# Define the variables related to the restart of the HPR-LP
 mutable struct HPRLP_restart
     # indicate which restart condition is satisfied, 1: sufficient, 2: necessary, 3: long
     restart_flag::Int

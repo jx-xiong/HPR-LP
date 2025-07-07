@@ -1,6 +1,6 @@
 
-# This file is the main file for the package HPRLP (release version).
-# **Last Updated:** Jun 4, 2025  
+# This file is the main file for the package HPR-LP (release version).
+
 # The package is used to solve linear programming (LP) with HPR method in the paper HPR-LP: An implementation of an HPR method for
 # solving linear programming.
 # The package is developed by Kaihuang Chen · Defeng Sun · Yancheng Yuan · Guojun Zhang · Xinyuan Zhao.
@@ -12,7 +12,7 @@
 
 
 #=
-HPRLP Solver: Code Overview
+HPR-LP Solver: Code Overview
 
 This solver is designed for GPU-accelerated large-scale LP problems, using adaptive restarts, dynamic step-size updates, 
     and efficient memory management to improve convergence speed.
@@ -35,8 +35,8 @@ Key Components:
 	Result Collection
 		•   collect_results_gpu!(): Saves final solution values.
 
-2. Execution Flow (HPRLP(lp, scaling_info, params))
-The HPRLP function is the core solver, executing the following steps:
+2. Execution Flow (solve(lp, scaling_info, params))
+The solve function is the core solver, executing the following steps:
 	1.	Power iteration to estimate λ_max.
 	2.	Initialize residuals, restart conditions, and GPU workspace.
 	3.	Iterative solver updates:
@@ -359,7 +359,7 @@ function collect_results_cpu!(
     return results
 end
 
-# the function to allocate the workspace for the HPRLP algorithm
+# the function to allocate the workspace for the HPR-LP algorithm
 function allocate_workspace_gpu(lp::LP_info_gpu, params::HPRLP_parameters, lambda_max::Float64)
     ws = HPRLP_workspace_gpu()
     m, n = size(lp.A)
@@ -448,7 +448,7 @@ function print_step(iter::Int)
     return max(10^floor(log10(iter)) / 10, 10)
 end
 
-# the main function for the HPRLP algorithm
+# The main function for the HPR-LP algorithm
 function solve(lp::Union{LP_info_gpu,LP_info_cpu},
     scaling_info::Union{Scaling_info_gpu,Scaling_info_cpu},
     params::HPRLP_parameters)
