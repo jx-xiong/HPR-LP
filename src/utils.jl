@@ -182,7 +182,7 @@ function power_iteration_cpu(A::SparseMatrixCSC, AT::SparseMatrixCSC,
         end
     end
     println("Power iteration did not converge within the specified tolerance.")
-    println("The maximum iteration is ", max_iterations, " and the error is ", CUDA.norm(q))
+    println("The maximum iteration is ", max_iterations, " and the error is ", norm(q))
     return lambda_max
 end
 
