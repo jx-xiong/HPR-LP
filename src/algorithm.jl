@@ -351,7 +351,6 @@ function collect_results_cpu!(
     results.residuals = residuals.KKTx_and_gap_org_bar
     results.primal_obj = residuals.primal_obj_bar
     results.gap = residuals.rel_gap_bar
-    results.sigma = ws.sigma
     results.x .= sc.b_scale * (ws.x_bar ./ sc.col_norm)
     results.y .= sc.c_scale * (ws.y_bar ./ sc.row_norm)
     results.z .= sc.c_scale * (ws.z_bar .* sc.col_norm)
