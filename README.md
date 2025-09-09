@@ -11,8 +11,7 @@
 $$
 \begin{array}{ll}
 \underset{x \in \mathbb{R}^n}{\min} \quad & \langle c, x \rangle \\
-\text{s.t.} \quad & A_1 x = b_1, \\
-& A_2 x \geq b_2, \\
+\text{s.t.} \quad & L \leq A x \leq U, \\
 & l \leq x \leq u .
 \end{array}
 $$
@@ -23,7 +22,7 @@ $$
 
 ## Numerical Results on an NVIDIA A100-SXM4-80GB GPU
 
-**Numerical performance of HPR-LP.jl and** [**cuPDLP.jl**](https://github.com/jinwen-yang/cuPDLP.jl) **(downloaded on July 24th, 2024) on 49 instances of **[**Mittelmann's LP benchmark set**](https://plato.asu.edu/ftp/lpfeas.html)** with Gurobi's presolve**
+**Numerical performance of HPR-LP and** [**cuPDLP.jl**](https://github.com/jinwen-yang/cuPDLP.jl) **(downloaded on July 24th, 2024) on 49 instances of **[**Mittelmann's LP benchmark set**](https://plato.asu.edu/ftp/lpfeas.html)** without Gurobi's presolve. Time limit 15000 seconds.**
 
 <table>
   <thead>
@@ -49,48 +48,84 @@ $$
   <tbody>
     <tr>
       <td align="middle">cuPDLP.jl</td>
-      <td align="middle">60.0</td>
-      <td align="middle">46</td>
-      <td align="middle">118.6</td>
-      <td align="middle">45</td>
-      <td align="middle">220.6</td>
+      <td align="middle">76.9</td>
+      <td align="middle">42</td>
+      <td align="middle">156.2</td>
+      <td align="middle">41</td>
+      <td align="middle">277.9</td>
+      <td align="middle">40</td>
+    </tr>
+    <tr>
+      <td align="middle">HPR-LP (v0.1.0)</td>
+      <td align="middle">30.2</td>
+      <td align="middle">47</td>
+      <td align="middle">69.1</td>
+      <td align="middle">44</td>
+      <td align="middle">103.8</td>
       <td align="middle">43</td>
     </tr>
     <tr>
-      <td align="middle">HPR-LP.jl</td>
-      <td align="middle">17.4</td>
-      <td align="middle">49</td>
-      <td align="middle">31.8</td>
-      <td align="middle">49</td>
-      <td align="middle">59.4</td>
+      <td align="middle">HPR-LP (v0.1.1)</td>
+      <td align="middle">27.9</td>
       <td align="middle">48</td>
+      <td align="middle">58.4</td>
+      <td align="middle">44</td>
+      <td align="middle">90.9</td>
+      <td align="middle">44</td>
     </tr>
   </tbody>
 </table>
 
-**SGM10 of HPR-LP.jl and cuPDLP.jl on 20 QAP instances (LP relaxation) with Gurobi's presolve**
+**Numerical performance of HPR-LP and cuPDLP.jl on 18 LP relaxations (>10M nonzeros in $A$) from **[**MIPLIB 2017**](https://miplib.zib.de/)** without Gurobi's presolve. Time limit 18000 seconds.**
 
 <table>
   <thead>
     <tr>
       <th align="middle">Tolerance</th>
       <th align="middle">1e-4</th>
+      <th align="middle">1e-4</th>
+      <th align="middle">1e-6</th>
       <th align="middle">1e-6</th>
       <th align="middle">1e-8</th>
+      <th align="middle">1e-8</th>
+    </tr>
+    <tr>
+      <th align="middle">Solvers</th>
+      <th align="middle">SGM10</th>
+      <th align="middle">Solved</th>
+      <th align="middle">SGM10</th>
+      <th align="middle">Solved</th>
+      <th align="middle">SGM10</th>
+      <th align="middle">Solved</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <td align="middle">cuPDLP.jl</td>
-      <td align="middle">12.7</td>
-      <td align="middle">60.0</td>
-      <td align="middle">343.1</td>
+      <td align="middle">129.8</td>
+      <td align="middle">16</td>
+      <td align="middle">253.3</td>
+      <td align="middle">15</td>
+      <td align="middle">442.2</td>
+      <td align="middle">14</td>
     </tr>
     <tr>
-      <td align="middle">HPR-LP.jl</td>
-      <td align="middle">2.9</td>
-      <td align="middle">8.8</td>
-      <td align="middle">60.2</td>
+      <td align="middle">HPR-LP (v0.1.0)</td>
+      <td align="middle">117.6</td>
+      <td align="middle">17</td>
+      <td align="middle">260.7</td>
+      <td align="middle">15</td>
+      <td align="middle">428.6</td>
+      <td align="middle">14</td>
+    </tr>
+    <tr>
+      <td align="middle">HPR-LP (v0.1.1)</td>
+      <td align="middle">65.2</td>
+      <td align="middle">17</td>
+      <td align="middle">131.6</td>
+      <td align="middle">17</td>
+      <td align="middle">219.3</td>
+      <td align="middle">17</td>
     </tr>
   </tbody>
 </table>
@@ -229,8 +264,6 @@ Below is a list of the parameters in HPR-LP along with their default values and 
     <tr><td><code>stoptol</code></td><td><code>1e-6</code></td><td>Stopping tolerance for convergence checks.</td></tr>
     <tr><td><code>device_number</code></td><td><code>0</code></td><td>GPU device number (only relevant if <code>use_gpu</code> is true).</td></tr>
     <tr><td><code>max_iter</code></td><td><code>typemax(Int32)</code></td><td>Maximum number of iterations allowed.</td></tr>
-    <tr><td><code>sigma</code></td><td><code>1.0</code></td><td>Initial value of the σ parameter used in the algorithm.</td></tr>
-    <tr><td><code>sigma_fixed</code></td><td><code>false</code></td><td>Whether σ is fixed throughout the optimization process.</td></tr>
     <tr><td><code>check_iter</code></td><td><code>150</code></td><td>Number of iterations to check residuals.</td></tr>
     <tr><td><code>use_Ruiz_scaling</code></td><td><code>true</code></td><td>Whether to apply Ruiz scaling.</td></tr>
     <tr><td><code>use_Pock_Chambolle_scaling</code></td><td><code>true</code></td><td>Whether to use the Pock-Chambolle scaling.</td></tr>
