@@ -24,6 +24,7 @@ params.time_limit = 3600
 params.stoptol = 1e-8
 params.device_number = 0
 params.use_gpu = true
+params.warm_up = true
 HPRLP_result = HPRLP.run_single("model.mps", params)
 
 # if maximize, then the objective value is the negative of the result

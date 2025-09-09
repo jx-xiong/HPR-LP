@@ -3,11 +3,9 @@ using LinearAlgebra
 import HPRLP
 
 
-# min c * x
-# s.t. A_1 * x = b_1
-#      A_2 * x >= b_2
-#      l <= x <= u
-# A_1 has m1 rows, A = [A_1; A_2] should be non-empty
+# min <c,x>
+# s.t. AL <= Ax <= AU
+#       l <= x <= u
 
 
 # Example 1
@@ -18,13 +16,12 @@ import HPRLP
 #      x1 <= Inf, x2 <= Inf
 
 A = sparse([-1 -2; -3 -1])
-b = Vector{Float64}([-10, -12])
+AL = Vector{Float64}([-10, -12])
+AU = Vector{Float64}([Inf, Inf])
 c = Vector{Float64}([-3, -5])
 l = Vector{Float64}([0, 0])
 u = Vector{Float64}([Inf, Inf])
 
-# the first m1 rows of A are equality constraints, the rest are ≥ constraints
-m1 = 0
 obj_constant = 0.0
 
 params = HPRLP.HPRLP_parameters()
@@ -32,8 +29,9 @@ params.time_limit = 3600
 params.stoptol = 1e-8
 params.device_number = 0
 params.use_gpu = true
+params.warm_up = true
 
-result = HPRLP.run_lp(A, b, c, l, u, m1, obj_constant, params)
+result = HPRLP.run_lp(A, AL, AU, c, l, u, obj_constant, params)
 
 println("Objective value: ", result.primal_obj)
 println("x1 = ", result.x[1])
