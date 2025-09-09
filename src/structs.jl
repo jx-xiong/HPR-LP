@@ -16,14 +16,8 @@ mutable struct HPRLP_parameters
     # the stopping tolerance, default is 1e-6
     stoptol::Float64
 
-    # the initial sigma value, default is 1.0
-    sigma::Float64
-
     # the maximum number of iterations, default is 1000
     max_iter::Int
-
-    # whether the sigma is fixed, default is false
-    sigma_fixed::Bool
 
     # the time limit in seconds, default is 3600.0
     time_limit::Float64
@@ -53,7 +47,7 @@ mutable struct HPRLP_parameters
     print_frequency::Int
 
     # Default constructor
-    HPRLP_parameters() = new(1e-6, 1.0, typemax(Int32), false, 3600.0, 150, true, true, true, true, 0, false, -1)
+    HPRLP_parameters() = new(1e-6, typemax(Int32), 3600.0, 150, true, true, true, true, 0, false, -1)
 end
 
 
@@ -88,6 +82,7 @@ mutable struct HPRLP_results
 
     # Objective gap
     gap::Float64
+
 
     # OPTIMAL, MAX_ITER or TIME_LIMIT
     # OPTIMAL: the algorithm finds the optimal solution
@@ -131,6 +126,9 @@ mutable struct HPRLP_workspace_gpu
     # The vector y_bar, corresponding to ȳ in the paper
     y_bar::CuVector{Float64}
 
+    # The vector y_obj, used for computing the dual objective function variable
+    y_obj::CuVector{Float64}
+
     # The vector dy, mainly used to store the difference between y1 and y2
     dy::CuVector{Float64}
 
@@ -143,8 +141,11 @@ mutable struct HPRLP_workspace_gpu
     # The sparse matrix A^T, the transpose of A
     AT::CuSparseMatrixCSR{Float64,Int32}
 
-    # The vector b, the right-hand side of the constraints
-    b::CuVector{Float64}
+    # The vector AL, the coefficients of the lower bound of the constraints
+    AL::CuVector{Float64}
+
+    # The vector AU, the coefficients of the lower bound of the constraints
+    AU::CuVector{Float64}
 
     # The vector c, the coefficients of the objective function
     c::CuVector{Float64}
@@ -160,9 +161,6 @@ mutable struct HPRLP_workspace_gpu
 
     # The vector Rd, normally used to store the vector c-A^Ty-z
     Rd::CuVector{Float64}
-
-    # The number of equality constraints
-    m1::Int
 
     # The total number of constraints
     m::Int
@@ -203,17 +201,18 @@ mutable struct HPRLP_workspace_cpu
     y::Vector{Float64}
     y_hat::Vector{Float64}
     y_bar::Vector{Float64}
+    y_obj::Vector{Float64}
     dy::Vector{Float64}
     z_bar::Vector{Float64}
     A::SparseMatrixCSC{Float64,Int32}
     AT::SparseMatrixCSC{Float64,Int32}
-    b::Vector{Float64}
     c::Vector{Float64}
+    AL::Vector{Float64}
+    AU::Vector{Float64}
     l::Vector{Float64}
     u::Vector{Float64}
     Rp::Vector{Float64}
     Rd::Vector{Float64}
-    m1::Int
     m::Int
     n::Int
     sigma::Float64
@@ -270,6 +269,12 @@ mutable struct HPRLP_restart
     # the value \tilde{R}_{r,t-1}
     save_gap::Float64
 
+    # the best value \tilde{R}_{best}
+    best_gap::Float64
+
+    # the  value of sigma at the best_gap
+    best_sigma::Float64
+
     # the number of inner iterations, t in the paper
     inner::Int
 
@@ -302,11 +307,11 @@ end
 mutable struct LP_info_cpu
     A::SparseMatrixCSC{Float64,Int32}
     AT::SparseMatrixCSC{Float64,Int32}
-    b::Vector{Float64}
     c::Vector{Float64}
+    AL::Vector{Float64}
+    AU::Vector{Float64}
     l::Vector{Float64}
     u::Vector{Float64}
-    m1::Int
     obj_constant::Float64
 end
 
@@ -314,11 +319,11 @@ end
 mutable struct LP_info_gpu
     A::CuSparseMatrixCSR{Float64,Int32}
     AT::CuSparseMatrixCSR{Float64,Int32}
-    b::CuVector{Float64}
     c::CuVector{Float64}
+    AL::CuVector{Float64}
+    AU::CuVector{Float64}
     l::CuVector{Float64}
     u::CuVector{Float64}
-    m1::Int
     obj_constant::Float64
 end
 

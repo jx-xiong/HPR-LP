@@ -27,40 +27,10 @@ function formulation(lp)
 
     @assert length(lp.lcon) == length(idxE) + length(idxG) + length(idxL) + length(idxB)
 
-    # rearrange the constraints and right hand side
-    AE = A[idxE, :]
-    bE = lp.ucon[idxE]
-
-    AB = A[idxB, :]
-    bB = zeros(length(idxB))
-
-    AG = A[idxG, :]
-    bG = lp.lcon[idxG]
-
-    AL = A[idxL, :]
-    bL = -lp.ucon[idxL]
-
-    AE = hcat(AE, spzeros(length(idxE), length(idxB)))
-    AB = hcat(AB, -spdiagm(ones(length(idxB))))
-    AG = hcat(AG, spzeros(length(idxG), length(idxB)))
-    AL = hcat(-AL, spzeros(length(idxL), length(idxB)))
-
-    A = vcat(AE, AB, AG, AL)
-    b = vcat(bE, bB, bG, bL)
-
-    m1 = length(idxE) + length(idxB)
-
-    # Add the slack variables for the boxed constraints L <= Ax <= U
-    c = vcat(lp.c, zeros(length(idxB)))
-    l = vcat(lp.lvar, lp.lcon[idxB])
-    u = vcat(lp.uvar, lp.ucon[idxB])
-
-    println("dimension of A is ", size(A))
-
-    standard_qp = LP_info_cpu(A, transpose(A), b, c, l, u, m1, lp.c0)
+    standard_lp = LP_info_cpu(A, transpose(A), lp.c, lp.lcon, lp.ucon, lp.lvar, lp.uvar, lp.c0)
 
     # Return the modified lp
-    return standard_qp
+    return standard_lp
 end
 
 # the scaling function for the LP problem
@@ -74,23 +44,29 @@ function scaling!(lp::LP_info_cpu, use_Ruiz_scaling::Bool, use_Pock_Chambolle_sc
     temp_norm2 = zeros(n)
     DA = spdiagm(temp_norm1)
     EA = spdiagm(temp_norm2)
-
-    scaling_info = Scaling_info_cpu(copy(lp.l), copy(lp.u), row_norm, col_norm, 1, 1, 1, 1, 1 + norm(lp.b), 1 + norm(lp.c))
-
+    AL_nInf = copy(lp.AL)
+    AU_nInf = copy(lp.AU)
+    AL_nInf[lp.AL.==-Inf] .= 0.0
+    AU_nInf[lp.AU.==Inf] .= 0.0
+    norm_b_org = 1 + norm(max.(abs.(AL_nInf), abs.(AU_nInf)))
+    norm_c_org = 1 + norm(lp.c)
+    # norm_b_org = 5.42181966531778
+    scaling_info = Scaling_info_cpu(copy(lp.l), copy(lp.u), row_norm, col_norm, 1, 1, 1, 1, norm_b_org, norm_c_org)
+    println("norm_b_org: ", norm_b_org)
+    println("norm_c_org: ", norm_c_org)
     # Ruiz scaling
     if use_Ruiz_scaling
         for _ in 1:10
             temp_norm1 .= sqrt.(maximum(abs, lp.A, dims=2)[:, 1])
-
             temp_norm1[iszero.(temp_norm1)] .= 1.0
             row_norm .*= temp_norm1
             DA .= spdiagm(1.0 ./ temp_norm1)
             temp_norm2 .= sqrt.(maximum(abs, lp.A, dims=1)[1, :])
             temp_norm2[iszero.(temp_norm2)] .= 1.0
-
             col_norm .*= temp_norm2
             EA .= spdiagm(1.0 ./ temp_norm2)
-            lp.b ./= temp_norm1
+            lp.AL ./= temp_norm1
+            lp.AU ./= temp_norm1
             lp.A .= DA * lp.A * EA
             lp.c ./= temp_norm2
             lp.l .*= temp_norm2
@@ -106,10 +82,10 @@ function scaling!(lp::LP_info_cpu, use_Ruiz_scaling::Bool, use_Pock_Chambolle_sc
         DA .= spdiagm(1.0 ./ temp_norm1)
         temp_norm2 .= sqrt.(sum(abs, lp.A, dims=1)[1, :])
         temp_norm2[iszero.(temp_norm2)] .= 1.0
-
         col_norm .*= temp_norm2
         EA .= spdiagm(1.0 ./ temp_norm2)
-        lp.b ./= temp_norm1
+        lp.AL ./= temp_norm1
+        lp.AU ./= temp_norm1
         lp.A .= DA * lp.A * EA
         lp.c ./= temp_norm2
         lp.l .*= temp_norm2
@@ -118,9 +94,14 @@ function scaling!(lp::LP_info_cpu, use_Ruiz_scaling::Bool, use_Pock_Chambolle_sc
 
     # scaling for b and c
     if use_bc_scaling
-        b_scale = 1 + norm(lp.b)
+        AL_nInf = copy(lp.AL)
+        AU_nInf = copy(lp.AU)
+        AL_nInf[lp.AL.==-Inf] .= 0.0
+        AU_nInf[lp.AU.==Inf] .= 0.0
+        b_scale = 1 + norm(max.(abs.(AL_nInf), abs.(AU_nInf)))
         c_scale = 1 + norm(lp.c)
-        lp.b ./= b_scale
+        lp.AL ./= b_scale
+        lp.AU ./= b_scale
         lp.c ./= c_scale
         lp.l ./= b_scale
         lp.u ./= b_scale
@@ -130,7 +111,11 @@ function scaling!(lp::LP_info_cpu, use_Ruiz_scaling::Bool, use_Pock_Chambolle_sc
         scaling_info.b_scale = 1.0
         scaling_info.c_scale = 1.0
     end
-    scaling_info.norm_b = norm(lp.b)
+    AL_nInf = copy(lp.AL)
+    AU_nInf = copy(lp.AU)
+    AL_nInf[lp.AL.==-Inf] .= 0.0
+    AU_nInf[lp.AU.==Inf] .= 0.0
+    scaling_info.norm_b = norm(max.(abs.(AL_nInf), abs.(AU_nInf)))
     scaling_info.norm_c = norm(lp.c)
     lp.AT = transpose(lp.A)
     scaling_info.row_norm = row_norm
@@ -216,11 +201,11 @@ function run_file(FILE_NAME::String, params::HPRLP_parameters)
         println("COPY TO GPU ...")
         standard_lp_gpu = LP_info_gpu(CuSparseMatrixCSR(standard_lp.A),
             CuSparseMatrixCSR(standard_lp.A'),
-            CuVector(standard_lp.b),
             CuVector(standard_lp.c),
+            CuVector(standard_lp.AL),
+            CuVector(standard_lp.AU),
             CuVector(standard_lp.l),
             CuVector(standard_lp.u),
-            standard_lp.m1,
             standard_lp.obj_constant,
         )
         scaling_info_gpu = Scaling_info_gpu(CuVector(scaling_info.l_org),
@@ -259,11 +244,11 @@ end
 
 # it's used in demo_Abc.jl
 function run_lp(A::SparseMatrixCSC,
-    b::Vector{Float64},
+    AL::Vector{Float64},
+    AU::Vector{Float64},
     c::Vector{Float64},
     l::Vector{Float64},
     u::Vector{Float64},
-    m1::Int,
     obj_constant::Float64,
     params::HPRLP_parameters)
 
@@ -272,35 +257,36 @@ function run_lp(A::SparseMatrixCSC,
         t_start_all = time()
         max_iter = params.max_iter
         params.max_iter = 200
-        results = run_Abc(A, b, c, l, u, m1, obj_constant, params)
+        results = run_Abc(A, c, AL, AU, l, u, obj_constant, params)
         params.max_iter = max_iter
         all_time = time() - t_start_all
         println("warm up time: ", all_time)
         println("warm up ends ----------------------------------------------------------------------------------------------------------")
     end
     println("main run starts: ----------------------------------------------------------------------------------------------------------")
-    results = run_Abc(A, b, c, l, u, m1, obj_constant, params)
+    results = run_Abc(A, c, AL, AU, l, u, obj_constant, params)
     println("main run ends----------------------------------------------------------------------------------------------------------")
     return results
 end
 
 # the function to run the HPR-LP algorithm on a single LP problem with A, b, c, l, u, m1, obj_constant
 function run_Abc(A::SparseMatrixCSC,
-    b::Vector{Float64},
     c::Vector{Float64},
+    AL::Vector{Float64},
+    AU::Vector{Float64},
     l::Vector{Float64},
     u::Vector{Float64},
-    m1::Int,
     obj_constant::Float64,
     params::HPRLP_parameters)
 
     A = copy(A)
-    b = copy(b)
     c = copy(c)
+    AL = copy(AL)
+    AU = copy(AU)
     l = copy(l)
     u = copy(u)
     setup_start = time()
-    standard_lp = LP_info_cpu(A, transpose(A), b, c, l, u, m1, obj_constant)
+    standard_lp = LP_info_cpu(A, transpose(A), c, AL, AU, l, u, obj_constant)
     if params.use_gpu
         CUDA.device!(params.device_number)
         t_start = time()
@@ -313,11 +299,11 @@ function run_Abc(A::SparseMatrixCSC,
         println("COPY TO GPU ...")
         standard_lp_gpu = LP_info_gpu(CuSparseMatrixCSR(standard_lp.A),
             CuSparseMatrixCSR(standard_lp.A'),
-            CuVector(standard_lp.b),
             CuVector(standard_lp.c),
+            CuVector(standard_lp.AL),
+            CuVector(standard_lp.AU),
             CuVector(standard_lp.l),
             CuVector(standard_lp.u),
-            standard_lp.m1,
             standard_lp.obj_constant,
         )
         scaling_info_gpu = Scaling_info_gpu(CuVector(scaling_info.l_org),
@@ -395,6 +381,7 @@ function run_dataset(data_path::String, result_path::String, params::HPRLP_param
     end
 
 
+    warm_up_done = false
     for i = 1:length(files)
         file = files[i]
         if file in namelist
@@ -407,7 +394,8 @@ function run_dataset(data_path::String, result_path::String, params::HPRLP_param
 
             redirect_stdout(io) do
                 println(@sprintf("solving the problem %d", i), @sprintf(": %s", file))
-                if params.warm_up
+                if params.warm_up && !warm_up_done
+                    warm_up_done = true
                     println("warm up starts: ---------------------------------------------------------------------------------------------------------- ")
                     t_start_all = time()
                     max_iter = params.max_iter
@@ -465,7 +453,6 @@ function run_dataset(data_path::String, result_path::String, params::HPRLP_param
             geomean_iter_4 = exp(mean(log.(iter4list .+ 10.0))) - 10.0
             geomean_iter_6 = exp(mean(log.(iter6list .+ 10.0))) - 10.0
             push!(result_table, ["SGM10", geomean_iter, geomean_time, "", "", "", geomean_iter_4, geomean_time_4, geomean_iter_6, geomean_time_6])
-
             # count the number of solved instances, termlist = "OPTIMAL" means solved
             solved = count(x -> x < params.time_limit, timelist)
             solved_4 = count(x -> x < params.time_limit, time4list)
