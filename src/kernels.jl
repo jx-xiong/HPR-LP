@@ -1,5 +1,5 @@
 # the function to compute z = a * x + b * y
-function axpby_kernel!(a::Float64, x::CuDeviceVector{Float64}, b::Float64, y::CuDeviceVector{Float64}, z::CuDeviceVector{Float64}, n::Int)
+function axpby_kernel!(a::Float64, x::CuDeviceVector{FloatType}, b::Float64, y::CuDeviceVector{FloatType}, z::CuDeviceVector{FloatType}, n::Int)
     i = threadIdx().x + (blockDim().x * (blockIdx().x - 1))
     if i <= n
         @inbounds z[i] = a * x[i] + b * y[i]
@@ -7,21 +7,21 @@ function axpby_kernel!(a::Float64, x::CuDeviceVector{Float64}, b::Float64, y::Cu
     return
 end
 
-function axpby_gpu!(a::Float64, x::CuVector{Float64}, b::Float64, y::CuVector{Float64}, z::CuVector{Float64}, n::Int)
+function axpby_gpu!(a::Float64, x::CuVector{FloatType}, b::Float64, y::CuVector{FloatType}, z::CuVector{FloatType}, n::Int)
     @cuda threads = 256 blocks = ceil(Int, n / 256) axpby_kernel!(a, x, b, y, z, n)
 end
 
 function combined_kernel_x_z1!(
-    x::CuDeviceVector{Float64},
-    z_bar::CuDeviceVector{Float64},
-    x_bar::CuDeviceVector{Float64},
-    x_hat::CuDeviceVector{Float64},
-    l::CuDeviceVector{Float64},
-    u::CuDeviceVector{Float64},
-    sigma::Float64,
-    ATy::CuDeviceVector{Float64},
-    c::CuDeviceVector{Float64},
-    x0::CuDeviceVector{Float64},
+    x::CuDeviceVector{FloatType},
+    z_bar::CuDeviceVector{FloatType},
+    x_bar::CuDeviceVector{FloatType},
+    x_hat::CuDeviceVector{FloatType},
+    l::CuDeviceVector{FloatType},
+    u::CuDeviceVector{FloatType},
+    sigma::FloatType,
+    ATy::CuDeviceVector{FloatType},
+    c::CuDeviceVector{FloatType},
+    x0::CuDeviceVector{FloatType},
     fact1::Float64,
     fact2::Float64,
     n::Int)
@@ -50,17 +50,17 @@ end
 
 # the kernel function to update x_bar, Steps 7, 9, and 10 in Algorithm 2
 function combined_kernel_x_z2!(
-    x::CuDeviceVector{Float64},
-    x_bar::CuDeviceVector{Float64},
-    x_hat::CuDeviceVector{Float64},
-    l::CuDeviceVector{Float64},
-    u::CuDeviceVector{Float64},
-    sigma::Float64,
-    ATy::CuDeviceVector{Float64},
-    x0::CuDeviceVector{Float64},
-    c::CuDeviceVector{Float64},
-    fact1::Float64,
-    fact2::Float64,
+    x::CuDeviceVector{FloatType},
+    x_bar::CuDeviceVector{FloatType},
+    x_hat::CuDeviceVector{FloatType},
+    l::CuDeviceVector{FloatType},
+    u::CuDeviceVector{FloatType},
+    sigma::FloatType,
+    ATy::CuDeviceVector{FloatType},
+    x0::CuDeviceVector{FloatType},
+    c::CuDeviceVector{FloatType},
+    fact1::FloatType,
+    fact2::FloatType,
     n::Int)
     i = threadIdx().x + (blockDim().x * (blockIdx().x - 1))
     if i <= n
@@ -89,7 +89,7 @@ function update_x_z_gpu!(ws::HPRLP_workspace_gpu, fact1::Float64, fact2::Float64
     end
 end
 
-function update_x_z_cpu!(ws::HPRLP_workspace_cpu, fact1::Float64, fact2::Float64)
+function update_x_z_cpu!(ws::HPRLP_workspace_cpu, fact1::FloatType, fact2::FloatType)
     mul!(ws.ATy, ws.AT, ws.y)
     x = ws.x
     x_bar = ws.x_bar
@@ -120,16 +120,16 @@ function update_x_z_cpu!(ws::HPRLP_workspace_cpu, fact1::Float64, fact2::Float64
 end
 
 function update_y_kernel!(
-    y_bar::CuDeviceVector{Float64},
-    y::CuDeviceVector{Float64},
-    y_hat::CuDeviceVector{Float64},
-    y_obj::CuDeviceVector{Float64},
-    AL::CuDeviceVector{Float64},
-    AU::CuDeviceVector{Float64},
-    Ax::CuDeviceVector{Float64},
+    y_bar::CuDeviceVector{FloatType},
+    y::CuDeviceVector{FloatType},
+    y_hat::CuDeviceVector{FloatType},
+    y_obj::CuDeviceVector{FloatType},
+    AL::CuDeviceVector{FloatType},
+    AU::CuDeviceVector{FloatType},
+    Ax::CuDeviceVector{FloatType},
     fact1::Float64,
     fact2::Float64,
-    y0::CuDeviceVector{Float64},
+    y0::CuDeviceVector{FloatType},
     Halpern_fact1::Float64,
     Halpen_fact2::Float64,
     m::Int)
@@ -164,7 +164,7 @@ function update_y_gpu!(ws::HPRLP_workspace_gpu, Halpern_fact1::Float64, Halpen_f
     @cuda threads = 256 blocks = ceil(Int, ws.m / 256) update_y_kernel!(ws.y_bar, ws.y, ws.y_hat, ws.y_obj, ws.AL, ws.AU, ws.Ax, fact1, fact2, ws.last_y, Halpern_fact1, Halpen_fact2, ws.m)
 end
 
-function update_y_cpu!(ws::HPRLP_workspace_cpu, Halpern_fact1::Float64, Halpen_fact2::Float64)
+function update_y_cpu!(ws::HPRLP_workspace_cpu, Halpern_fact1::FloatType, Halpen_fact2::FloatType)
     mul!(ws.Ax, ws.A, ws.x_hat)
     fact1 = ws.lambda_max * ws.sigma
     fact2 = 1.0 / fact1
@@ -197,11 +197,11 @@ function update_y_cpu!(ws::HPRLP_workspace_cpu, Halpern_fact1::Float64, Halpen_f
 end
 
 # the kernel function to compute the dual residuals, ||c - A^T y - z||
-function compute_Rd_kernel!(col_norm::CuDeviceVector{Float64},
-    ATy::CuDeviceVector{Float64},
-    z::CuDeviceVector{Float64},
-    c::CuDeviceVector{Float64},
-    Rd::CuDeviceVector{Float64},
+function compute_Rd_kernel!(col_norm::CuDeviceVector{FloatType},
+    ATy::CuDeviceVector{FloatType},
+    z::CuDeviceVector{FloatType},
+    c::CuDeviceVector{FloatType},
+    Rd::CuDeviceVector{FloatType},
     n::Int)
     i = threadIdx().x + (blockDim().x * (blockIdx().x - 1))
     if i <= n
@@ -230,11 +230,11 @@ end
 
 
 
-function compute_err_lu_kernel!(col_norm::CuDeviceVector{Float64},
-    dx::CuDeviceVector{Float64},
-    x::CuDeviceVector{Float64},
-    l::CuDeviceVector{Float64},
-    u::CuDeviceVector{Float64},
+function compute_err_lu_kernel!(col_norm::CuDeviceVector{FloatType},
+    dx::CuDeviceVector{FloatType},
+    x::CuDeviceVector{FloatType},
+    l::CuDeviceVector{FloatType},
+    u::CuDeviceVector{FloatType},
     n::Int)
     i = threadIdx().x + (blockDim().x * (blockIdx().x - 1))
     if i <= n
@@ -246,10 +246,10 @@ end
 
 
 # the kernel function to compute the primal residuals, ||\Pi_D(b - Ax)||
-@inline function compute_err_Rp_kernel!(row_norm::CuDeviceVector{Float64},
-    Rp::CuDeviceVector{Float64},
-    AL::CuDeviceVector{Float64}, AU::CuDeviceVector{Float64},
-    Ax::CuDeviceVector{Float64}, m::Int)
+@inline function compute_err_Rp_kernel!(row_norm::CuDeviceVector{FloatType},
+    Rp::CuDeviceVector{FloatType},
+    AL::CuDeviceVector{FloatType}, AU::CuDeviceVector{FloatType},
+    Ax::CuDeviceVector{FloatType}, m::Int)
     i = threadIdx().x + (blockDim().x * (blockIdx().x - 1))
     if i <= m
         @inbounds begin

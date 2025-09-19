@@ -14,13 +14,13 @@ Data Structures
 # the space for the parameters of the HPR-LP algorithm
 mutable struct HPRLP_parameters
     # the stopping tolerance, default is 1e-6
-    stoptol::Float64
+    stoptol::FloatType
 
     # the maximum number of iterations, default is 1000
     max_iter::Int
 
     # the time limit in seconds, default is 3600.0
-    time_limit::Float64
+    time_limit::FloatType
 
     # the check interval for the residuals, default is 150
     check_iter::Int
@@ -63,25 +63,27 @@ mutable struct HPRLP_results
     iter_6::Int
 
     # Time in seconds
-    time::Float64
+    time::FloatType
 
     # Time in seconds for the 1e-4 accuracy
-    time_4::Float64
+    time_4::FloatType
 
     # Time in seconds for the 1e-6 accuracy
-    time_6::Float64
+    time_6::FloatType
 
+    read_time::FloatType
+    
     # Time used by power method
-    power_time::Float64
+    power_time::FloatType
 
     # Primal objective value
-    primal_obj::Float64
+    primal_obj::FloatType
 
     # Relative residuals of the primal feasibility, dual feasibility, and objective gap
-    residuals::Float64
+    residuals::FloatType
 
     # Objective gap
-    gap::Float64
+    gap::FloatType
 
 
     # OPTIMAL, MAX_ITER or TIME_LIMIT
@@ -91,13 +93,13 @@ mutable struct HPRLP_results
     output_type::String
 
     # The vector x
-    x::Vector{Float64}
+    x::Vector{FloatType}
 
     # The vector y
-    y::Vector{Float64}
+    y::Vector{FloatType}
 
     # The vector z
-    z::Vector{Float64}
+    z::Vector{FloatType}
 
     # Default constructor
     HPRLP_results() = new()
@@ -106,61 +108,61 @@ end
 # Define the workspace for the HPR-LP algorithm
 mutable struct HPRLP_workspace_gpu
     # The vector x
-    x::CuVector{Float64}
+    x::CuVector{FloatType}
 
     # The vector x_hat, corresponding to ̂x in the paper
-    x_hat::CuVector{Float64}
+    x_hat::CuVector{FloatType}
 
     # The vector x_bar, corresponding to x̄ in the paper
-    x_bar::CuVector{Float64}
+    x_bar::CuVector{FloatType}
 
     # The vector dx, mainly used to store the difference between x1 and x2
-    dx::CuVector{Float64}
+    dx::CuVector{FloatType}
 
     # The vector y
-    y::CuVector{Float64}
+    y::CuVector{FloatType}
 
     # The vector y_hat, corresponding to ̂y in the paper
-    y_hat::CuVector{Float64}
+    y_hat::CuVector{FloatType}
 
     # The vector y_bar, corresponding to ȳ in the paper
-    y_bar::CuVector{Float64}
+    y_bar::CuVector{FloatType}
 
     # The vector y_obj, used for computing the dual objective function variable
-    y_obj::CuVector{Float64}
+    y_obj::CuVector{FloatType}
 
     # The vector dy, mainly used to store the difference between y1 and y2
-    dy::CuVector{Float64}
+    dy::CuVector{FloatType}
 
     # The vector z_bar, corresponding to z̄ in the paper
-    z_bar::CuVector{Float64}
+    z_bar::CuVector{FloatType}
 
     # The sparse matrix A, corresponding to A in the paper, the constraints matrix
-    A::CuSparseMatrixCSR{Float64,Int32}
+    A::CuSparseMatrixCSR{FloatType,Int32}
 
     # The sparse matrix A^T, the transpose of A
-    AT::CuSparseMatrixCSR{Float64,Int32}
+    AT::CuSparseMatrixCSR{FloatType,Int32}
 
     # The vector AL, the coefficients of the lower bound of the constraints
-    AL::CuVector{Float64}
+    AL::CuVector{FloatType}
 
     # The vector AU, the coefficients of the lower bound of the constraints
-    AU::CuVector{Float64}
+    AU::CuVector{FloatType}
 
     # The vector c, the coefficients of the objective function
-    c::CuVector{Float64}
+    c::CuVector{FloatType}
 
     # The vector l, the lower bound of the variables
-    l::CuVector{Float64}
+    l::CuVector{FloatType}
 
     # The vector u, the upper bound of the variables
-    u::CuVector{Float64}
+    u::CuVector{FloatType}
 
     # The vector Rp, normally used to store the vector b-Ax
-    Rp::CuVector{Float64}
+    Rp::CuVector{FloatType}
 
     # The vector Rd, normally used to store the vector c-A^Ty-z
-    Rd::CuVector{Float64}
+    Rd::CuVector{FloatType}
 
     # The total number of constraints
     m::Int
@@ -169,22 +171,22 @@ mutable struct HPRLP_workspace_gpu
     n::Int
 
     # The value of σ
-    sigma::Float64
+    sigma::FloatType
 
     # The value of λ_max(AA^T), the maximum eigenvalue of the matrix AA^T
     lambda_max::Float64
 
     # Normally used to store the vector Ax
-    Ax::CuVector{Float64}
+    Ax::CuVector{FloatType}
 
     # Normally used to store the vector ATy
-    ATy::CuVector{Float64}
+    ATy::CuVector{FloatType}
 
     # Normally used to store the vector x that the algorithm restarted last time
-    last_x::CuVector{Float64}
+    last_x::CuVector{FloatType}
 
     # Normally used to store the vector y that the algorithm restarted last time
-    last_y::CuVector{Float64}
+    last_y::CuVector{FloatType}
 
     # Normally used to indicate whether the vector z should be computed
     update_z::Bool
@@ -194,33 +196,33 @@ mutable struct HPRLP_workspace_gpu
 end
 
 mutable struct HPRLP_workspace_cpu
-    x::Vector{Float64}
-    x_hat::Vector{Float64}
-    x_bar::Vector{Float64}
-    dx::Vector{Float64}
-    y::Vector{Float64}
-    y_hat::Vector{Float64}
-    y_bar::Vector{Float64}
-    y_obj::Vector{Float64}
-    dy::Vector{Float64}
-    z_bar::Vector{Float64}
-    A::SparseMatrixCSC{Float64,Int32}
-    AT::SparseMatrixCSC{Float64,Int32}
-    c::Vector{Float64}
-    AL::Vector{Float64}
-    AU::Vector{Float64}
-    l::Vector{Float64}
-    u::Vector{Float64}
-    Rp::Vector{Float64}
-    Rd::Vector{Float64}
+    x::Vector{FloatType}
+    x_hat::Vector{FloatType}
+    x_bar::Vector{FloatType}
+    dx::Vector{FloatType}
+    y::Vector{FloatType}
+    y_hat::Vector{FloatType}
+    y_bar::Vector{FloatType}
+    y_obj::Vector{FloatType}
+    dy::Vector{FloatType}
+    z_bar::Vector{FloatType}
+    A::SparseMatrixCSC{FloatType,Int32}
+    AT::SparseMatrixCSC{FloatType,Int32}
+    c::Vector{FloatType}
+    AL::Vector{FloatType}
+    AU::Vector{FloatType}
+    l::Vector{FloatType}
+    u::Vector{FloatType}
+    Rp::Vector{FloatType}
+    Rd::Vector{FloatType}
     m::Int
     n::Int
-    sigma::Float64
-    lambda_max::Float64
-    Ax::Vector{Float64}
-    ATy::Vector{Float64}
-    last_x::Vector{Float64}
-    last_y::Vector{Float64}
+    sigma::FloatType
+    lambda_max::FloatType
+    Ax::Vector{FloatType}
+    ATy::Vector{FloatType}
+    last_x::Vector{FloatType}
+    last_y::Vector{FloatType}
     update_z::Bool
     HPRLP_workspace_cpu() = new()
 end
@@ -228,25 +230,25 @@ end
 # Define the variables related to the residuals of the HPR-LP
 mutable struct HPRLP_residuals
     # The relative residuals of the primal feasibility evaluated at x_bar
-    err_Rp_org_bar::Float64
+    err_Rp_org_bar::FloatType
 
     # The relative residuals of the dual feasibility evaluated at y_bar and z_bar
-    err_Rd_org_bar::Float64
+    err_Rd_org_bar::FloatType
 
     # The primal objective value evaluated at x_bar
-    primal_obj_bar::Float64
+    primal_obj_bar::FloatType
 
     # The dual objective value evaluated at y_bar and z_bar
-    dual_obj_bar::Float64
+    dual_obj_bar::FloatType
 
     # The relative gap evaluated at x_bar, y_bar, and z_bar
-    rel_gap_bar::Float64
+    rel_gap_bar::FloatType
 
     # indicate whether the residuals are updated
     is_updated::Bool
 
     # The maximum of the primal feasibility, dual feasibility, and duality gap
-    KKTx_and_gap_org_bar::Float64
+    KKTx_and_gap_org_bar::FloatType
 
     # Define a default constructor
     HPRLP_residuals() = new()
@@ -261,19 +263,19 @@ mutable struct HPRLP_restart
     first_restart::Bool
 
     # the value \tilde{R}_{r,0}
-    last_gap::Float64
+    last_gap::FloatType
 
     # the value \tilde{R}_{r,t}
-    current_gap::Float64
+    current_gap::FloatType
 
     # the value \tilde{R}_{r,t-1}
-    save_gap::Float64
+    save_gap::FloatType
 
     # the best value \tilde{R}_{best}
-    best_gap::Float64
+    best_gap::FloatType
 
     # the  value of sigma at the best_gap
-    best_sigma::Float64
+    best_sigma::FloatType
 
     # the number of inner iterations, t in the paper
     inner::Int
@@ -297,7 +299,7 @@ mutable struct HPRLP_restart
     times::Int
 
     # the value of M-norm 
-    weighted_norm::Float64
+    weighted_norm::FloatType
 
     # Default constructor
     HPRLP_restart() = new()
@@ -305,71 +307,71 @@ end
 
 # the space for the LP information on the CPU
 mutable struct LP_info_cpu
-    A::SparseMatrixCSC{Float64,Int32}
-    AT::SparseMatrixCSC{Float64,Int32}
-    c::Vector{Float64}
-    AL::Vector{Float64}
-    AU::Vector{Float64}
-    l::Vector{Float64}
-    u::Vector{Float64}
-    obj_constant::Float64
+    A::SparseMatrixCSC{FloatType,Int32}
+    AT::SparseMatrixCSC{FloatType,Int32}
+    c::Vector{FloatType}
+    AL::Vector{FloatType}
+    AU::Vector{FloatType}
+    l::Vector{FloatType}
+    u::Vector{FloatType}
+    obj_constant::FloatType
 end
 
 # the space for the LP information on the GPU
 mutable struct LP_info_gpu
-    A::CuSparseMatrixCSR{Float64,Int32}
-    AT::CuSparseMatrixCSR{Float64,Int32}
-    c::CuVector{Float64}
-    AL::CuVector{Float64}
-    AU::CuVector{Float64}
-    l::CuVector{Float64}
-    u::CuVector{Float64}
-    obj_constant::Float64
+    A::CuSparseMatrixCSR{FloatType,Int32}
+    AT::CuSparseMatrixCSR{FloatType,Int32}
+    c::CuVector{FloatType}
+    AL::CuVector{FloatType}
+    AU::CuVector{FloatType}
+    l::CuVector{FloatType}
+    u::CuVector{FloatType}
+    obj_constant::FloatType
 end
 
 # the space for the scaling information on the CPU
 mutable struct Scaling_info_cpu
     # the original vector l
-    l_org::Vector{Float64}
+    l_org::Vector{FloatType}
 
     # the original vector u
-    u_org::Vector{Float64}
+    u_org::Vector{FloatType}
 
     # the row norm of the matrix A
-    row_norm::Vector{Float64}
+    row_norm::Vector{FloatType}
 
     # the column norm of the matrix A
-    col_norm::Vector{Float64}
+    col_norm::Vector{FloatType}
 
     # the scaling factor for the vector b
-    b_scale::Float64
+    b_scale::FloatType
 
     # the scaling factor for the vector c
-    c_scale::Float64
+    c_scale::FloatType
 
     # the norm of the vector b
-    norm_b::Float64
+    norm_b::FloatType
 
     # the norm of the vector c
-    norm_c::Float64
+    norm_c::FloatType
 
     # the norm of the original vector b
-    norm_b_org::Float64
+    norm_b_org::FloatType
 
     # the norm of the original vector c
-    norm_c_org::Float64
+    norm_c_org::FloatType
 end
 
 # the space for the scaling information on the GPU
 mutable struct Scaling_info_gpu
-    l_org::CuVector{Float64}
-    u_org::CuVector{Float64}
-    row_norm::CuVector{Float64}
-    col_norm::CuVector{Float64}
-    b_scale::Float64
-    c_scale::Float64
-    norm_b::Float64
-    norm_c::Float64
-    norm_b_org::Float64
-    norm_c_org::Float64
+    l_org::CuVector{FloatType}
+    u_org::CuVector{FloatType}
+    row_norm::CuVector{FloatType}
+    col_norm::CuVector{FloatType}
+    b_scale::FloatType
+    c_scale::FloatType
+    norm_b::FloatType
+    norm_c::FloatType
+    norm_b_org::FloatType
+    norm_c_org::FloatType
 end

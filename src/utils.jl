@@ -128,9 +128,9 @@ function power_iteration_gpu(A::CuSparseMatrixCSR, AT::CuSparseMatrixCSR,
     max_iterations::Int=5000, tolerance::Float64=1e-4)
     seed = 1
     m, n = size(A)
-    z = CuVector(randn(Random.MersenneTwister(seed), m)) .+ 1e-8 # Initial random vector
-    q = CUDA.zeros(Float64, m)
-    ATq = CUDA.zeros(Float64, n)
+    z = CuVector(randn(Random.MersenneTwister(seed), FloatType, m)) .+ FloatType(1e-8) # Initial random vector
+    q = CUDA.zeros(FloatType, m)
+    ATq = CUDA.zeros(FloatType, n)
     lambda_max = 1
     for i in 1:max_iterations
         q .= z
@@ -149,12 +149,12 @@ function power_iteration_gpu(A::CuSparseMatrixCSR, AT::CuSparseMatrixCSR,
 end
 
 function power_iteration_cpu(A::SparseMatrixCSC, AT::SparseMatrixCSC,
-    max_iterations::Int=5000, tolerance::Float64=1e-4)
+    max_iterations::Int=5000, tolerance::FloatType=1e-4)
     seed = 1
     m, n = size(A)
     z = Vector(randn(Random.MersenneTwister(seed), m)) .+ 1e-8 # Initial random vector
-    q = zeros(Float64, m)
-    ATq = zeros(Float64, n)
+    q = zeros(FloatType, m)
+    ATq = zeros(FloatType, n)
     for i in 1:max_iterations
         q .= z
         q ./= norm(q)
@@ -237,19 +237,19 @@ function run_file(FILE_NAME::String, params::HPRLP_parameters)
         @sprintf("  read time = %.2fs", read_time),
         @sprintf("  setup time = %.2fs", setup_time),
         @sprintf("  solve time = %.2fs", results.time))
-
+    results.read_time = read_time
     return results
 end
 
 
 # it's used in demo_Abc.jl
 function run_lp(A::SparseMatrixCSC,
-    AL::Vector{Float64},
-    AU::Vector{Float64},
-    c::Vector{Float64},
-    l::Vector{Float64},
-    u::Vector{Float64},
-    obj_constant::Float64,
+    AL::Vector{FloatType},
+    AU::Vector{FloatType},
+    c::Vector{FloatType},
+    l::Vector{FloatType},
+    u::Vector{FloatType},
+    obj_constant::FloatType,
     params::HPRLP_parameters)
 
     if params.warm_up
@@ -271,12 +271,12 @@ end
 
 # the function to run the HPR-LP algorithm on a single LP problem with A, b, c, l, u, m1, obj_constant
 function run_Abc(A::SparseMatrixCSC,
-    c::Vector{Float64},
-    AL::Vector{Float64},
-    AU::Vector{Float64},
-    l::Vector{Float64},
-    u::Vector{Float64},
-    obj_constant::Float64,
+    c::Vector{FloatType},
+    AL::Vector{FloatType},
+    AU::Vector{FloatType},
+    l::Vector{FloatType},
+    u::Vector{FloatType},
+    obj_constant::FloatType,
     params::HPRLP_parameters)
 
     A = copy(A)

@@ -12,6 +12,9 @@ using Random
 using Statistics
 using Logging
 
+FloatType = Float32
+println("FloatType = ", FloatType)
+
 include("structs.jl")
 include("utils.jl")
 include("kernels.jl")

@@ -234,7 +234,7 @@ end
 # the function to check whether to restart the algorithm
 function check_restart(restart_info::HPRLP_restart,
     iter::Int,
-    check_iter::Int, sigma::Float64,
+    check_iter::Int, sigma::FloatType,
 )
 
     restart_info.restart_flag = 0
@@ -325,9 +325,9 @@ function collect_results_gpu!(
     power_time::Float64,
 )
     results = HPRLP_results()
-    results.x = CuVector{Float64}(undef, ws.n)
-    results.y = CuVector{Float64}(undef, ws.m)
-    results.z = CuVector{Float64}(undef, ws.n)
+    results.x = CuVector{FloatType}(undef, ws.n)
+    results.y = CuVector{FloatType}(undef, ws.m)
+    results.z = CuVector{FloatType}(undef, ws.n)
     results.iter = iter
     results.time = time() - t_start_alg
     results.power_time = power_time
@@ -351,9 +351,9 @@ function collect_results_cpu!(
     power_time::Float64,
 )
     results = HPRLP_results()
-    results.x = Vector{Float64}(undef, ws.n)
-    results.y = Vector{Float64}(undef, ws.m)
-    results.z = Vector{Float64}(undef, ws.n)
+    results.x = Vector{FloatType}(undef, ws.n)
+    results.y = Vector{FloatType}(undef, ws.m)
+    results.z = Vector{FloatType}(undef, ws.n)
     results.iter = iter
     results.time = time() - t_start_alg
     results.power_time = power_time
@@ -374,16 +374,16 @@ function allocate_workspace_gpu(lp::LP_info_gpu, lambda_max::Float64)
     ws.m = m
     ws.n = n
     ws.lambda_max = lambda_max
-    ws.x = CUDA.zeros(Float64, n)
-    ws.x_hat = CUDA.zeros(Float64, n)
-    ws.x_bar = CUDA.zeros(Float64, n)
-    ws.dx = CUDA.zeros(Float64, n)
-    ws.y = CUDA.zeros(Float64, m)
-    ws.y_hat = CUDA.zeros(Float64, m)
-    ws.y_bar = CUDA.zeros(Float64, m)
-    ws.dy = CUDA.zeros(Float64, m)
-    ws.y_obj = CUDA.zeros(Float64, m)
-    ws.z_bar = CUDA.zeros(Float64, n)
+    ws.x = CUDA.zeros(FloatType, n)
+    ws.x_hat = CUDA.zeros(FloatType, n)
+    ws.x_bar = CUDA.zeros(FloatType, n)
+    ws.dx = CUDA.zeros(FloatType, n)
+    ws.y = CUDA.zeros(FloatType, m)
+    ws.y_hat = CUDA.zeros(FloatType, m)
+    ws.y_bar = CUDA.zeros(FloatType, m)
+    ws.dy = CUDA.zeros(FloatType, m)
+    ws.y_obj = CUDA.zeros(FloatType, m)
+    ws.z_bar = CUDA.zeros(FloatType, n)
     ws.A = lp.A
     ws.AT = lp.AT
     ws.AL = lp.AL
@@ -391,17 +391,17 @@ function allocate_workspace_gpu(lp::LP_info_gpu, lambda_max::Float64)
     ws.c = lp.c
     ws.l = lp.l
     ws.u = lp.u
-    ws.Rp = CUDA.zeros(Float64, m)
-    ws.Rd = CUDA.zeros(Float64, n)
-    ws.ATy = CUDA.zeros(Float64, n)
-    ws.Ax = CUDA.zeros(Float64, m)
-    ws.last_x = CUDA.zeros(Float64, n)
-    ws.last_y = CUDA.zeros(Float64, m)
+    ws.Rp = CUDA.zeros(FloatType, m)
+    ws.Rd = CUDA.zeros(FloatType, n)
+    ws.ATy = CUDA.zeros(FloatType, n)
+    ws.Ax = CUDA.zeros(FloatType, m)
+    ws.last_x = CUDA.zeros(FloatType, n)
+    ws.last_y = CUDA.zeros(FloatType, m)
     ws.update_z = false
     return ws
 end
 
-function allocate_workspace_cpu(lp::LP_info_cpu, lambda_max::Float64)
+function allocate_workspace_cpu(lp::LP_info_cpu, lambda_max::FloatType)
     ws = HPRLP_workspace_cpu()
     m, n = size(lp.A)
     ws.m = m
@@ -435,7 +435,7 @@ function allocate_workspace_cpu(lp::LP_info_cpu, lambda_max::Float64)
 end
 
 # the function to initialize the restart information
-function initialize_restart(sigma::Float64)
+function initialize_restart(sigma::FloatType)
     restart_info = HPRLP_restart()
     restart_info.first_restart = true
     restart_info.save_gap = Inf
